@@ -1,6 +1,6 @@
 [submodule "client"]
 	path = client
 	url = https://github.com/Kraitcer/client.git
-[submodule "server"]
-	path = server
+[submodule "tracking-journal-server-nest-postgresql"]
+	path = tracking-journal-server-nest-postgresql
 	url = https://github.com/Kraitcer/tracking-journal-server-nest-postgresql.git
