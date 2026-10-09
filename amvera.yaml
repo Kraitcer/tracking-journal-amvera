@@ -4,7 +4,8 @@ meta:
     name: docker
 
 build:
-  dockerfile: Dockerfile
+  dockerfile: Dockerfile.amvera
 
 run:
-  containerPort: 5173
+  containerPort: 5000
+  persistenceMount: /data

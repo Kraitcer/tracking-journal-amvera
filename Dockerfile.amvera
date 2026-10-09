@@ -1,0 +1,38 @@
+FROM node:22-bookworm-slim AS client-build
+
+WORKDIR /client
+COPY client/package*.json ./
+RUN npm ci
+COPY client/ ./
+ARG VITE_API_URL=/api
+ARG VITE_GOOGLE_CLIENT_ID
+ENV VITE_API_URL=${VITE_API_URL}
+ENV VITE_GOOGLE_CLIENT_ID=${VITE_GOOGLE_CLIENT_ID}
+RUN npm run build
+
+FROM node:22-bookworm-slim AS server-build
+
+WORKDIR /app
+RUN npm install --global npm@11.19.0
+COPY tracking-journal-server-nest-postgresql/package*.json ./
+RUN npm ci
+COPY tracking-journal-server-nest-postgresql/ ./
+ENV DATABASE_URL=postgresql://build:build@localhost:5432/build?schema=public
+RUN npm run db:generate && npm run build
+
+FROM node:22-bookworm-slim AS runtime
+
+WORKDIR /app
+ENV NODE_ENV=production
+ENV PORT=5000
+ENV UPLOADS_DIR=/data/uploads
+
+COPY --from=server-build /app/package*.json ./
+COPY --from=server-build /app/node_modules ./node_modules
+COPY --from=server-build /app/dist ./dist
+COPY --from=server-build /app/prisma.config.ts ./prisma.config.ts
+COPY --from=server-build /app/prisma ./prisma
+COPY --from=client-build /client/dist ./public
+
+EXPOSE 5000
+CMD ["sh", "-c", "npm run db:deploy && node dist/main.js"]
