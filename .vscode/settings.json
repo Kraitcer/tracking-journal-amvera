@@ -1,0 +1,8 @@
+{
+  "chat.tools.terminal.autoApprove": {
+    "/^Push-Location client; npm\\.cmd run typecheck; Pop-Location$/": {
+      "approve": true,
+      "matchCommandLine": true
+    }
+  }
+}
