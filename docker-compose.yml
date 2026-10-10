@@ -20,7 +20,7 @@ services:
     build:
       context: ./tracking-journal-server-nest-postgresql
     restart: unless-stopped
-    command: sh -c "npm run db:generate && npm run db:deploy && npm run start:dev"
+    command: sh -c "npm ci && npm run db:generate && npm run db:deploy && npm run start:dev"
     environment:
       DATABASE_URL: "postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}?schema=${DB_SCHEMA}"
       PORT: ${PORT:-5000}
