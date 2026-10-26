@@ -25,7 +25,8 @@ export_repo() {
       --exclude='.git' --exclude='.gitmodules' --exclude='.github' \
       --exclude='.env' --exclude='.env.*' \
       --exclude='node_modules' --exclude='dist' --exclude='coverage' \
-      --exclude='uploads' --exclude='*.log' --exclude='*.tsbuildinfo'
+      --exclude='*.log' --exclude='*.tsbuildinfo' \
+      --anchored --exclude='uploads'
   while IFS= read -r -d '' entry; do
     metadata="${entry%%$'\t'*}"
     path="${entry#*$'\t'}"
@@ -61,6 +62,8 @@ for required in \
   tracking-journal-server-nest-postgresql/package.json \
   tracking-journal-server-nest-postgresql/package-lock.json \
   tracking-journal-server-nest-postgresql/src/main.ts \
+  tracking-journal-server-nest-postgresql/src/uploads/uploads.module.ts \
+  tracking-journal-server-nest-postgresql/src/uploads/upload-files.ts \
   tracking-journal-server-nest-postgresql/prisma/schema.prisma; do
   [[ -s "$snapshot/$required" ]] || fail "Required source file is missing or empty: $required"
 done

@@ -62,7 +62,10 @@ A push to a submodule alone does **not** trigger deployment of the parent.
 This keeps frontend/backend releases explicit and reproducible.
 
 The exporter omits environment files, Git metadata, dependency/build directories,
-logs, coverage and uploads. Review committed source for credentials anyway:
+logs, coverage and repository-root `uploads` data directories. Source modules such
+as `src/uploads` must remain in both the export and Docker build context.
+The server build and runtime stages install OpenSSL for Prisma.
+Review committed source for credentials anyway:
 filename exclusions are not a secret scanner.
 
 Delivery is serialized, preserves the existing Amvera `master` history and never
@@ -95,6 +98,12 @@ bash scripts/test-deploy-amvera.sh
 
 The test uses temporary local Git repositories, not Amvera credentials or network
 access. It tests delivery and export behavior, not the application's Docker build.
+With Docker running, also verify the real `.dockerignore` rules using an isolated
+scratch build (no base image download):
+
+```bash
+TEST_DOCKER_CONTEXT=1 bash scripts/test-deploy-amvera.sh --actual-source
+```
 
 ## References
 

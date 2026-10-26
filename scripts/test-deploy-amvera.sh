@@ -54,10 +54,12 @@ git -C "$temp_dir/client" add .
 git -C "$temp_dir/client" commit -m "Client fixture"
 
 git init --initial-branch=master "$temp_dir/server"
-mkdir -p "$temp_dir/server/src" "$temp_dir/server/prisma"
-for file in package.json package-lock.json src/main.ts prisma/schema.prisma; do
+mkdir -p "$temp_dir/server/src/uploads" "$temp_dir/server/prisma" "$temp_dir/server/uploads"
+for file in package.json package-lock.json src/main.ts prisma/schema.prisma \
+  src/uploads/uploads.module.ts src/uploads/upload-files.ts; do
   printf 'fixture\n' > "$temp_dir/server/$file"
 done
+printf 'dummy-upload\n' > "$temp_dir/server/uploads/image.png"
 git -C "$temp_dir/server" add .
 git -C "$temp_dir/server" commit -m "Server fixture"
 
@@ -79,6 +81,9 @@ git init --bare --initial-branch=master "$remote"
 deploy
 assert_file client/src/main.tsx
 assert_file tracking-journal-server-nest-postgresql/prisma/schema.prisma
+assert_file tracking-journal-server-nest-postgresql/src/uploads/uploads.module.ts
+assert_file tracking-journal-server-nest-postgresql/src/uploads/upload-files.ts
+assert_absent tracking-journal-server-nest-postgresql/uploads/image.png
 assert_absent .gitmodules
 assert_absent docker-compose.yml
 assert_absent client/.env.production
@@ -139,9 +144,33 @@ if [[ "${1:-}" == --actual-source ]]; then
   bash "$script_dir/deploy-amvera.sh" "$script_dir/.." "$remote"
   assert_file client/package-lock.json
   assert_file tracking-journal-server-nest-postgresql/prisma/schema.prisma
+  assert_file tracking-journal-server-nest-postgresql/src/uploads/uploads.module.ts
+  assert_file tracking-journal-server-nest-postgresql/src/uploads/upload-files.ts
   assert_absent .gitmodules
   assert_absent client/.env
   [[ -z "$(git --git-dir="$remote" ls-tree -r master | grep '^160000 ' || true)" ]] ||
     fail "Actual project export contains Git links"
   echo "PASS: actual project exported with real client/server files and no Git links."
+fi
+
+if [[ "${TEST_DOCKER_CONTEXT:-0}" == 1 ]]; then
+  context="$temp_dir/docker-context"
+  output="$temp_dir/docker-output"
+  mkdir -p "$context/tracking-journal-server-nest-postgresql/src/uploads" \
+    "$context/tracking-journal-server-nest-postgresql/uploads" "$context/client/uploads"
+  cp "$script_dir/../.dockerignore" "$context/.dockerignore"
+  printf 'FROM scratch\nCOPY . /\n' > "$context/Dockerfile"
+  for file in src/uploads/uploads.module.ts src/uploads/upload-files.ts uploads/image.png; do
+    printf 'fixture\n' > "$context/tracking-journal-server-nest-postgresql/$file"
+  done
+  printf 'fixture\n' > "$context/client/uploads/image.png"
+  docker build --output "type=local,dest=$output" "$context"
+  for file in uploads.module.ts upload-files.ts; do
+    [[ -s "$output/tracking-journal-server-nest-postgresql/src/uploads/$file" ]] ||
+      fail "Docker context excluded source module: $file"
+  done
+  [[ ! -e "$output/tracking-journal-server-nest-postgresql/uploads" ]] ||
+    fail "Docker context contains server upload data"
+  [[ ! -e "$output/client/uploads" ]] || fail "Docker context contains client upload data"
+  echo "PASS: Docker includes upload source modules and excludes upload data."
 fi

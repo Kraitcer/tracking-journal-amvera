@@ -3,7 +3,8 @@
 **/.git
 **/.env
 **/.env.*
-**/uploads
+client/uploads
+tracking-journal-server-nest-postgresql/uploads
 **/coverage
 **/npm-debug.log*
 **/tsconfig.tsbuildinfo
