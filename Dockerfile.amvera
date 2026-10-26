@@ -39,6 +39,7 @@ COPY --from=server-build /app/package*.json ./
 COPY --from=server-build /app/node_modules ./node_modules
 COPY --from=server-build /app/dist ./dist
 COPY --from=server-build /app/prisma.config.ts ./prisma.config.ts
+COPY --from=server-build /app/dist/database-url.js ./src/database-url.js
 COPY --from=server-build /app/prisma ./prisma
 COPY --from=client-build /client/dist ./public
 

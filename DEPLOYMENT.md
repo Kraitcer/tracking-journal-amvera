@@ -33,7 +33,13 @@
    as the Docker build argument's default only in the deployment copy.
    Amvera runtime variables are not available during its build.
 7. In Amvera, configure:
-   - `DATABASE_URL`: the real PostgreSQL connection string, stored as a secret;
+   - either `DATABASE_URL` (the real PostgreSQL connection string, stored as a
+     secret), or separate `DB_HOST`, `DB_USER`, `DB_PASSWORD` (secret), `DB_NAME`
+     variables; `DB_PORT` defaults to `5432` and `DB_SCHEMA` to `public`.
+     A nonblank `DATABASE_URL` takes precedence over `DB_*`. Both Prisma
+     migrations and the server use the same resolver, which encodes credentials
+     and database/schema names. Use the cloud database host, not local `db` or
+     `localhost`. For additional URL options such as `sslmode`, use `DATABASE_URL`;
    - `trackingApp_jwtPrivateKey`: a secret of at least 32 UTF-8 bytes;
    - `trackingApp_googleClientId`: the same Google client ID, if used;
    - `PORT=5000` if setting an explicit port; do not use a different value without
