@@ -40,7 +40,10 @@
      migrations and the server use the same resolver, which encodes credentials
      and database/schema names. Use the cloud database host, not local `db` or
      `localhost`. For additional URL options such as `sslmode`, use `DATABASE_URL`;
-   - `trackingApp_jwtPrivateKey`: a secret of at least 32 UTF-8 bytes;
+   - `TRACKINGAPP_JWTPRIVATEKEY`: a secret of at least 32 UTF-8 bytes.
+     The legacy name `trackingApp_jwtPrivateKey` remains supported and takes
+     precedence if present (even if empty). Names are case-sensitive on Linux;
+     configure only one name to avoid ambiguity;
    - `trackingApp_googleClientId`: the same Google client ID, if used;
    - `PORT=5000` if setting an explicit port; do not use a different value without
      also changing `run.containerPort`;
