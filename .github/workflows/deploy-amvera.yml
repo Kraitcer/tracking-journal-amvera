@@ -1,0 +1,77 @@
+name: Deploy to Amvera
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: amvera-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out source and pinned submodules
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          persist-credentials: false
+          token: ${{ secrets.SUBMODULES_READ_TOKEN || github.token }}
+
+      - name: Test deployment exporter
+        shell: bash
+        run: bash scripts/test-deploy-amvera.sh
+
+      - name: Validate deployment settings
+        shell: bash
+        env:
+          AMVERA_GIT_URL: ${{ vars.AMVERA_GIT_URL }}
+          AMVERA_USERNAME: ${{ secrets.AMVERA_USERNAME }}
+          AMVERA_PASSWORD: ${{ secrets.AMVERA_PASSWORD }}
+        run: |
+          set -euo pipefail
+          [[ "$AMVERA_GIT_URL" =~ ^https://git\.amvera\.ru/[^[:space:]@\?\#]+$ ]] || {
+            echo "::error::Set AMVERA_GIT_URL to the HTTPS repository URL from Amvera, without credentials."
+            exit 1
+          }
+          [[ -n "$AMVERA_USERNAME" && -n "$AMVERA_PASSWORD" ]] || {
+            echo "::error::Set AMVERA_USERNAME and AMVERA_PASSWORD repository secrets."
+            exit 1
+          }
+
+      - name: Export source and push deployment snapshot
+        shell: bash
+        env:
+          AMVERA_GIT_URL: ${{ vars.AMVERA_GIT_URL }}
+          AMVERA_USERNAME: ${{ secrets.AMVERA_USERNAME }}
+          AMVERA_PASSWORD: ${{ secrets.AMVERA_PASSWORD }}
+          VITE_GOOGLE_CLIENT_ID: ${{ vars.VITE_GOOGLE_CLIENT_ID }}
+          GIT_TERMINAL_PROMPT: '0'
+        run: |
+          set -euo pipefail
+          askpass="$(mktemp "$RUNNER_TEMP/amvera-askpass.XXXXXX")"
+          trap 'rm -f "$askpass"' EXIT
+          cat > "$askpass" <<'ASKPASS'
+          #!/usr/bin/env bash
+          case "$1" in
+            *Username*) printf '%s\n' "$AMVERA_USERNAME" ;;
+            *Password*) printf '%s\n' "$AMVERA_PASSWORD" ;;
+            *) echo "Unexpected Git credential prompt" >&2; exit 1 ;;
+          esac
+          ASKPASS
+          chmod 700 "$askpass"
+          export GIT_ASKPASS="$askpass"
+          bash scripts/deploy-amvera.sh "$GITHUB_WORKSPACE" "$AMVERA_GIT_URL"
+
+      - name: Deployment hand-off
+        shell: bash
+        run: |
+          echo "Source was delivered to Amvera. Check its build/application logs and public URL." >> "$GITHUB_STEP_SUMMARY"
+          echo "A successful push does not confirm that the application is healthy." >> "$GITHUB_STEP_SUMMARY"
