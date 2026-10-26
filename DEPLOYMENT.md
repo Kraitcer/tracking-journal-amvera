@@ -19,7 +19,9 @@
 2. Copy the application's HTTPS Git repository URL from Amvera.
 3. In the parent GitHub repository, open **Settings > Secrets and variables > Actions**.
    Add repository variable `AMVERA_GIT_URL`, for example
-   `https://git.amvera.ru/YOUR_USER/YOUR_APPLICATION`. Do not put credentials in it.
+   `https://git.amvera.ru/YOUR_USER/YOUR_APPLICATION` or
+   `https://git.mia0.amvera.ru/YOUR_USER/YOUR_APPLICATION`. Use the exact host
+   shown by Amvera; do not replace the regional host or put credentials in the URL.
 4. Add repository secrets `AMVERA_USERNAME` and `AMVERA_PASSWORD` for Git access.
    Never commit these values. Amvera documents account username/password
    authentication for its HTTPS Git endpoint.

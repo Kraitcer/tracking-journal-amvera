@@ -37,7 +37,7 @@ jobs:
           AMVERA_PASSWORD: ${{ secrets.AMVERA_PASSWORD }}
         run: |
           set -euo pipefail
-          [[ "$AMVERA_GIT_URL" =~ ^https://git\.amvera\.ru/[^[:space:]@\?\#]+$ ]] || {
+          [[ "$AMVERA_GIT_URL" =~ ^https://git(\.mia0)?\.amvera\.ru/[^[:space:]@\?\#]+$ ]] || {
             echo "::error::Set AMVERA_GIT_URL to the HTTPS repository URL from Amvera, without credentials."
             exit 1
           }
