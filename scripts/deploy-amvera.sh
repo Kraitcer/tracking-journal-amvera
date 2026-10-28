@@ -68,15 +68,6 @@ for required in \
   [[ -s "$snapshot/$required" ]] || fail "Required source file is missing or empty: $required"
 done
 
-# Vite consumes this public value during the Amvera build, not at runtime.
-google_id="${VITE_GOOGLE_CLIENT_ID:-}"
-[[ "$google_id" =~ ^[a-zA-Z0-9._-]*$ ]] || fail "Invalid public Google client ID"
-[[ "$(grep -c '^ARG VITE_GOOGLE_CLIENT_ID$' "$snapshot/Dockerfile.amvera")" == 1 ]] ||
-  fail "Expected exactly one Google client ID build argument in Dockerfile.amvera"
-sed "s/^ARG VITE_GOOGLE_CLIENT_ID$/ARG VITE_GOOGLE_CLIENT_ID=$google_id/" \
-  "$snapshot/Dockerfile.amvera" > "$temp_dir/Dockerfile.amvera"
-mv "$temp_dir/Dockerfile.amvera" "$snapshot/Dockerfile.amvera"
-
 if git ls-remote --exit-code "$remote_url" refs/heads/master > "$temp_dir/remote-ref"; then
   git clone --single-branch --branch master "$remote_url" "$delivery"
   git -C "$delivery" rm -r --ignore-unmatch -- .

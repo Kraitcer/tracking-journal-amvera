@@ -52,7 +52,6 @@ jobs:
           AMVERA_GIT_URL: ${{ vars.AMVERA_GIT_URL }}
           AMVERA_USERNAME: ${{ secrets.AMVERA_USERNAME }}
           AMVERA_PASSWORD: ${{ secrets.AMVERA_PASSWORD }}
-          VITE_GOOGLE_CLIENT_ID: ${{ vars.VITE_GOOGLE_CLIENT_ID }}
           GIT_TERMINAL_PROMPT: '0'
         run: |
           set -euo pipefail

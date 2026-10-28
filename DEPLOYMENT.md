@@ -28,11 +28,7 @@
 5. If any submodule is private, add secret `SUBMODULES_READ_TOKEN`: a token with
    read access to repository contents for the parent and all private submodules.
    Public repositories use the workflow's default GitHub token.
-6. If Google sign-in is needed, add repository variable `VITE_GOOGLE_CLIENT_ID`.
-   This is a **public** OAuth client ID, not a client secret. The exporter sets it
-   as the Docker build argument's default only in the deployment copy.
-   Amvera runtime variables are not available during its build.
-7. In Amvera, configure:
+6. In Amvera, configure:
    - either `DATABASE_URL` (the real PostgreSQL connection string, stored as a
      secret), or separate `DB_HOST`, `DB_USER`, `DB_PASSWORD` (secret), `DB_NAME`
      variables; `DB_PORT` defaults to `5432` and `DB_SCHEMA` to `public`.
@@ -44,14 +40,17 @@
      The legacy name `trackingApp_jwtPrivateKey` remains supported and takes
      precedence if present (even if empty). Names are case-sensitive on Linux;
      configure only one name to avoid ambiguity;
-   - `trackingApp_googleClientId`: the same Google client ID, if used;
+   - `GOOGLE_CLIENT_ID`: the public Google OAuth web client ID, if used.
+     The UI fetches it from `GET /api/users/login/google/config` at runtime;
+     no client environment variable or Docker build argument is needed.
+     This endpoint returns only the public client ID, never a client secret;
    - `PORT=5000` if setting an explicit port; do not use a different value without
      also changing `run.containerPort`;
    - persistence mounted at `/data` for uploads (the Dockerfile sets
      `UPLOADS_DIR=/data/uploads`);
    - an application domain. For Google sign-in, register the public UI origin
      in the Google OAuth client settings too.
-8. Commit and push these deployment files to the parent's `master` branch.
+7. Commit and push these deployment files to the parent's `master` branch.
    Alternatively, run **Actions > Deploy to Amvera > Run workflow** on `master`.
 
 No GitHub-to-Amvera webhook is required: the workflow pushes directly to Amvera,

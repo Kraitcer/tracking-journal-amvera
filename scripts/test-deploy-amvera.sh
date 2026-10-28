@@ -7,7 +7,6 @@ trap 'rm -rf "$temp_dir"' EXIT
 export GIT_CONFIG_GLOBAL="$temp_dir/gitconfig"
 export GIT_CONFIG_NOSYSTEM=1
 export GIT_TERMINAL_PROMPT=0
-export VITE_GOOGLE_CLIENT_ID=123-test.apps.googleusercontent.com
 git config --global user.name "Deployment test"
 git config --global user.email "deployment-test@example.invalid"
 git config --global core.autocrlf false
@@ -64,7 +63,7 @@ git -C "$temp_dir/server" add .
 git -C "$temp_dir/server" commit -m "Server fixture"
 
 git init --initial-branch=master "$temp_dir/source"
-printf 'FROM node:22\nARG VITE_GOOGLE_CLIENT_ID\n' > "$temp_dir/source/Dockerfile.amvera"
+printf 'FROM node:22\n' > "$temp_dir/source/Dockerfile.amvera"
 printf 'run:\n  containerPort: 5000\n' > "$temp_dir/source/amvera.yaml"
 printf '**/.env*\n' > "$temp_dir/source/.dockerignore"
 printf 'local-only\n' > "$temp_dir/source/docker-compose.yml"
@@ -95,11 +94,9 @@ assert_absent client/build.log
   fail "Uncommitted edits were exported"
 [[ "$(git --git-dir="$remote" ls-tree master client)" == 040000* ]] ||
   fail "Client is still a Git link"
-git --git-dir="$remote" show master:Dockerfile.amvera |
-  grep -qx "ARG VITE_GOOGLE_CLIENT_ID=$VITE_GOOGLE_CLIENT_ID" ||
-  fail "Public build configuration was not exported"
-grep -qx 'ARG VITE_GOOGLE_CLIENT_ID' "$temp_dir/source/Dockerfile.amvera" ||
-  fail "Source Dockerfile was changed"
+git --git-dir="$remote" show master:Dockerfile.amvera > "$temp_dir/deployed-Dockerfile"
+cmp "$temp_dir/source/Dockerfile.amvera" "$temp_dir/deployed-Dockerfile" ||
+  fail "Deployment changed the Dockerfile"
 first_commit="$(git --git-dir="$remote" rev-parse master)"
 deploy
 [[ "$(git --git-dir="$remote" rev-parse master)" == "$first_commit" ]] ||
@@ -121,7 +118,6 @@ assert_absent old-client
 [[ -z "$(git --git-dir="$remote" ls-tree -r master | grep '^160000 ' || true)" ]] ||
   fail "Deployment contains Git links"
 
-VITE_GOOGLE_CLIENT_ID='invalid value' expect_failure "Invalid public Google client ID"
 git -C "$temp_dir/source/client" add src/main.tsx
 git -C "$temp_dir/source/client" commit -m "Unpinned client change"
 expect_failure "Submodule does not match its pinned commit"
@@ -135,7 +131,7 @@ expect_failure "Required source file is missing or empty"
 [[ "$(git --git-dir="$remote" rev-parse master^)" == "$old_commit" ]] ||
   fail "Failed validation modified the remote"
 
-echo "PASS: flattened files, exclusions, pinned commits, clean source, public build config,"
+echo "PASS: flattened files, exclusions, pinned commits, clean source, unchanged Dockerfile,"
 echo "empty remote, idempotency, legacy layout migration, history preservation and validation failures."
 
 if [[ "${1:-}" == --actual-source ]]; then
