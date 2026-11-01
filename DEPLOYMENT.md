@@ -83,6 +83,24 @@ An identical snapshot creates no commit and does not trigger another build.
 
 ## Verification and troubleshooting
 
+### Landing-page images
+
+The landing page imports committed WebP assets and uses 640px variants through
+`srcSet` for smaller screens. The hero is loaded eagerly with high priority;
+other content images use native lazy loading. Parallax backgrounds are assigned
+only when within 600px of the SimpleBar viewport, using an IntersectionObserver
+rooted in its scroll container.
+
+Originals of converted images are retained locally as `*.legacy.*` alongside the
+WebP files and ignored by the client's Git configuration. They are not included
+in the committed deployment snapshot; keep a separate backup if they are needed
+for future editing. The small Carnegie JPEG is unchanged because WebP conversion
+did not reduce its size. To replace an image, generate its WebP and responsive
+variant, update the corresponding dimensions and `srcSet` widths, and commit the
+optimized assets in the client submodule before updating the parent pointer.
+
+### Deployment checks
+
 A green workflow means **source delivery**, not a successful build or healthy app.
 Check in Amvera:
 
